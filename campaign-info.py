@@ -61,6 +61,7 @@ def find_active_campaign():
                 return {
                     'number': campaign.get('number', 'X'),
                     'name': campaign.get('name', ''),
+                    'description': campaign.get('description', ''),
                     'start': start,
                     'end': end,
                     'recovery_end': recovery_end,
@@ -92,10 +93,15 @@ def main():
     recovery_end = campaign['recovery_end']
     number = campaign['number']
     name = campaign['name']
+    description = campaign['description']
     
     print()
     print(f"Campaign {number:02d}: {name}")
     print("━" * 50)
+    
+    if description:
+        print(f"{description}")
+        print("━" * 50)
     
     if today <= end:
         # في الحملة
