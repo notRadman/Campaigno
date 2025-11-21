@@ -1,61 +1,80 @@
 #!/usr/bin/env python3
 """
-Campaign Prompt - عرض معلومات الحملة في الـprompt
+Campaign Prompt - Minimal Version
+عرض معلومات الحملة في الـprompt
 """
 
 import yaml
 from pathlib import Path
 from datetime import datetime, timedelta
 
-CAMPAIGNS_DIR = Path.home() / "Campaigns"
+CAMPAIGNS_FILE = Path.home() / "campaigns.md"
 
-# للتحقق إذا كان يعمل من venv
-SCRIPT_DIR = Path(__file__).parent if '__file__' in globals() else Path.cwd()
+def parse_campaigns_file():
+    """قراءة ملف الحملات"""
+    if not CAMPAIGNS_FILE.exists():
+        return []
+    
+    content = CAMPAIGNS_FILE.read_text()
+    campaigns = []
+    
+    # تقسيم حسب ---
+    blocks = content.split('---\n')
+    
+    for block in blocks:
+        block = block.strip()
+        if not block or block == '':
+            continue
+        
+        try:
+            # محاولة قراءة YAML
+            data = yaml.safe_load(block)
+            if data and isinstance(data, dict) and 'number' in data:
+                campaigns.append(data)
+        except:
+            continue
+    
+    return campaigns
 
 def find_active_campaign():
     """البحث عن الحملة النشطة"""
-    if not CAMPAIGNS_DIR.exists():
+    campaigns = parse_campaigns_file()
+    if not campaigns:
         return None
     
     today = datetime.now().date()
     
-    for folder in CAMPAIGNS_DIR.iterdir():
-        if not folder.is_dir() or folder.name.startswith("_"):
-            continue
-        
-        campaign_file = folder / "campaign.md"
-        if not campaign_file.exists():
-            continue
-        
+    for campaign in campaigns:
         try:
-            content = campaign_file.read_text()
-            if content.startswith("---"):
-                yaml_end = content.find("---", 3)
-                yaml_content = content[3:yaml_end]
-                data = yaml.safe_load(yaml_content)
-                
-                status = data.get('status', 'active')
-                
-                if status in ['active', 'rest']:
-                    start_date = datetime.strptime(data['start'], '%Y-%m-%d').date()
-                    end_date = datetime.strptime(data['end'], '%Y-%m-%d').date()
-                    
-                    recovery_end_str = data.get('recovery_end', '').strip()
-                    if recovery_end_str:
-                        recovery_end = datetime.strptime(recovery_end_str, '%Y-%m-%d').date()
-                    else:
-                        recovery_end = end_date + timedelta(days=14)
-                    
-                    if start_date <= today <= recovery_end:
-                        return {
-                            'data': data,
-                            'end_date': end_date,
-                            'recovery_end': recovery_end
-                        }
+            start = datetime.strptime(campaign['start'], '%Y-%m-%d').date()
+            end = datetime.strptime(campaign['end'], '%Y-%m-%d').date()
+            
+            # حساب نهاية الاستشفاء
+            recovery_end_str = str(campaign.get('recovery_end', '')).strip()
+            if recovery_end_str and recovery_end_str != 'None':
+                recovery_end = datetime.strptime(recovery_end_str, '%Y-%m-%d').date()
+            else:
+                recovery_end = end + timedelta(days=14)
+            
+            # التحقق إذا كان اليوم ضمن نطاق الحملة
+            if start <= today <= recovery_end:
+                return {
+                    'number': campaign.get('number', 'X'),
+                    'name': campaign.get('name', ''),
+                    'start': start,
+                    'end': end,
+                    'recovery_end': recovery_end
+                }
         except:
             continue
     
     return None
+
+def calculate_week(start, today):
+    """حساب الأسبوع الحالي"""
+    days_passed = (today - start).days
+    week = (days_passed // 7) + 1
+    return min(week, 6)  # max 6 weeks
 
 def main():
     campaign = find_active_campaign()
@@ -63,22 +82,19 @@ def main():
     if not campaign:
         return
     
-    data = campaign['data']
     today = datetime.now().date()
-    end_date = campaign['end_date']
+    start = campaign['start']
+    end = campaign['end']
     recovery_end = campaign['recovery_end']
+    number = campaign['number']
     
-    # استخراج رقم الحملة من الاسم
-    name = data['name']
-    campaign_num = name.split()[1] if len(name.split()) > 1 else "X"
-    
-    if today <= end_date:
-        # في الحملة - عرض الأيام المتبقية
-        days_left = (end_date - today).days
-        week = data.get('current_week', 1)
-        print(f" [C{campaign_num}•W{week}•{days_left}d]", end="")
+    if today <= end:
+        # في الحملة
+        week = calculate_week(start, today)
+        days_left = (end - today).days
+        print(f" [C{number}•W{week}•{days_left}d left]", end="")
     else:
-        # في الاستشفاء - عرض التاريخ نفسه
+        # في الاستشفاء
         end_date_str = recovery_end.strftime("%b %d")
         print(f" [R→{end_date_str}]", end="")
 
