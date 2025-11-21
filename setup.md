@@ -11,26 +11,56 @@ cd ~/.config/campaigno
 chmod +x campaign-prompt.py
 chmod +x campaign-info.py
 chmod +x campaign-edit
-3. أضف للـPATH في shell config:
+
+## 🔧 إضافة للـBash:
+
+### في `~/.bashrc`:
+
+```bash
+# Campaign Manager
 export PATH="$HOME/.config/campaigno:$PATH"
 
+# Prompt
 campaign_status() {
-    $HOME/.config/campaigno/campaign-prompt.py 2>/dev/null || echo ""
+    python3 $HOME/.config/campaigno/campaign-prompt.py 2>/dev/null || echo ""
 }
+
+# إضافة للـPS1
+PS1='\[\e[32m\]\u@\h\[\e[0m\]:\[\e[34m\]\w\[\e[0m\]$(campaign_status) \$ '
+```
+
+---
+
+## 🔧 إضافة للـZsh:
+
+### في `~/.zshrc`:
+
+```bash
+# Campaign Manager
+export PATH="$HOME/.config/campaigno:$PATH"
+
+# Prompt
+campaign_status() {
+    python3 $HOME/.config/campaigno/campaign-prompt.py 2>/dev/null || echo ""
+}
+
+# إضافة للـRPROMPT
 RPROMPT='$(campaign_status)'
-4. اختر قالب وانسخه:
-# للعربية
-cp campaigns-template-ar.md ~/campaigns.md
+```
 
-# أو English
-cp campaigns-template-en.md ~/campaigns.md
+---
 
-🎮 الاستخدام:
-# عرض المعلومات
+## 🚀 بعد كده:
+
+```bash
+# أعد تحميل
+source ~/.bashrc  # أو ~/.zshrc
+
+# اختبر
 campaign-info
-
-# تعديل الملف
 campaign-edit
+```
 
-# الـprompt تلقائياً
-~/code [C1•W3•18d left] $
+---
+
+**كده تمام! 
