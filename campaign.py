@@ -39,7 +39,7 @@ WIKI_FILE = SCRIPT_DIR / "wiki.pdf"
 WIKI_VIEWER = "zathura"
 MOTIVATE_FILE = SCRIPT_DIR / "quotes.md"
 YOURSELF_FILE = SCRIPT_DIR / "yourself.md"
-YOURSELF_VIEWER = "bat"  # or: less, cat, nvim
+YOURSELF_VIEWER = "less"  # or: less, cat, nvim
 EDITOR = os.environ.get('EDITOR', 'nvim')
 
 # ═══════════════════════════════════════
@@ -94,9 +94,9 @@ def parse_campaigns_file():
                     campaign[key] = value
                     current_key = None
             
-            # عنصر في قائمة
+            # عنصر في قائمة (حفظ السطر مع المسافات للـ subtasks)
             elif line_stripped.startswith('-') and current_key:
-                current_list.append(line_stripped)
+                current_list.append(line.rstrip())
         
         # حفظ القائمة الأخيرة
         if current_key and current_list:
@@ -158,29 +158,69 @@ def calculate_week(start, today):
     return min(week, 6)
 
 def get_current_milestone(campaign_data):
-    """الحصول على المهمة الحالية"""
+    """الحصول على المهمة الحالية مع subtasks"""
     milestones = campaign_data.get(KEYS['milestones'], [])
     
     for i, milestone in enumerate(milestones):
-        milestone = milestone.strip()
-        # البحث عن أول مهمة معلقة [ ]
-        if '[ ]' in milestone:
-            # استخراج النص بعد [ ]
-            text = milestone.split('[ ]', 1)[1].strip()
-            return i + 1, text, len(milestones)
+        milestone_stripped = milestone.strip()
+        
+        if not milestone_stripped or not milestone_stripped.startswith('- ['):
+            continue
+        
+        # عد المسافات البادئة
+        leading_spaces = len(milestone) - len(milestone.lstrip())
+        
+        # main task = مسافات قليلة (3 أو أقل)
+        if leading_spaces <= 3:
+            if '[ ]' in milestone_stripped:
+                # لقينا main task معلقة
+                text = milestone_stripped.split('[ ]', 1)[1].strip()
+                
+                # دور على subtask معلقة تحتها
+                for j in range(i + 1, len(milestones)):
+                    sub_milestone = milestones[j]
+                    sub_stripped = sub_milestone.strip()
+                    sub_spaces = len(sub_milestone) - len(sub_milestone.lstrip())
+                    
+                    # لو لقينا main task تانية، وقف
+                    if sub_spaces <= 3 and sub_stripped.startswith('- ['):
+                        break
+                    
+                    # لو لقينا subtask معلقة، ارجعها
+                    if sub_spaces > 3 and sub_stripped.startswith('- [') and '[ ]' in sub_stripped:
+                        sub_text = sub_stripped.split('[ ]', 1)[1].strip()
+                        return i + 1, text, sub_text, len(milestones)
+                
+                # مفيش subtasks معلقة، ارجع الـ main task بس
+                return i + 1, text, None, len(milestones)
     
-    return None, None, len(milestones)
+    # مفيش حاجة معلقة خالص
+    return None, None, None, len(milestones)
 
 def count_completed_milestones(campaign_data):
-    """عد المهام المنجزة"""
+    """عد المهام المنجزة (main tasks فقط)"""
     milestones = campaign_data.get(KEYS['milestones'], [])
     completed = 0
+    total = 0
     
     for milestone in milestones:
-        if '[x]' in milestone or '[X]' in milestone:
-            completed += 1
+        milestone_stripped = milestone.strip()
+        
+        # تخطي الأسطر الفارغة
+        if not milestone_stripped:
+            continue
+        
+        # عد المسافات البادئة
+        leading_spaces = len(milestone) - len(milestone.lstrip())
+        
+        # main task = مسافات قليلة (3 أو أقل)
+        # subtask = مسافات كتيرة (أكتر من 3)
+        if leading_spaces <= 3 and milestone_stripped.startswith('- ['):
+            total += 1
+            if '[x]' in milestone_stripped or '[X]' in milestone_stripped:
+                completed += 1
     
-    return completed, len(milestones)
+    return completed, total
 
 # ═══════════════════════════════════════
 # الأوامر - Commands
@@ -238,19 +278,25 @@ def cmd_current():
     
     data = campaign['data']
     completed, total = count_completed_milestones(data)
-    milestone_num, milestone_text, _ = get_current_milestone(data)
+    milestone_num, parent_text, subtask_text, _ = get_current_milestone(data)
     
-    if milestone_text:
-        print(f"[{completed}/{total} {milestone_text}]")
+    if parent_text:
+        if subtask_text:
+            # عندنا parent و subtask
+            print(f"[{completed}/{total}] {parent_text} → {subtask_text}")
+        else:
+            # عندنا parent بس بدون subtasks معلقة
+            print(f"[{completed}/{total}] {parent_text}")
     else:
-        print(f"[{completed}/{total} جميع المهام منجزة! 🎉]")
+        print(f"[{completed}/{total}] جميع المهام منجزة! 🎉")
 
 def cmd_edit():
     """فتح ملف الحملات للتعديل"""
     # إنشاء الملف إذا لم يكن موجوداً
     if not CAMPAIGNS_FILE.exists():
+        CAMPAIGNS_FILE.parent.mkdir(parents=True, exist_ok=True)
         template = f"""---
-{KEYS['number']}: 1
+{KEYS['number']}: 0
 {KEYS['name']}: حملتي الأولى
 {KEYS['description']}: 
 {KEYS['start']}: {datetime.now().strftime('%Y-%m-%d')}
@@ -259,6 +305,8 @@ def cmd_edit():
 {KEYS['milestones']}:
    - [ ] مهمة 1
    - [ ] مهمة 2
+      - [ ] subtask 2.1
+      - [ ] subtask 2.2
    - [ ] مهمة 3
 {KEYS['status']}: 
 {KEYS['rate']}: 
@@ -276,6 +324,8 @@ def cmd_edit():
 {KEYS['recovery_end']}:
 {KEYS['milestones']}:
    - [x] مثال منجز
+      - [x] subtask منجز
+      - [ ] subtask معلق
    - [-] مثال ملغي
    - [ ] مثال معلق
 {KEYS['status']}: 
