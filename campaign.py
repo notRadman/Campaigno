@@ -288,11 +288,7 @@ def cmd_edit():
         print(f"✅ تم إنشاء ملف جديد: {CAMPAIGNS_FILE}")
     
     # فتح الملف في المحرر
-    if EDITOR in ['vim', 'nvim']:
-        # فتح مع set arabic
-        subprocess.run([EDITOR, '+set arabic', str(CAMPAIGNS_FILE)])
-    else:
-        subprocess.run([EDITOR, str(CAMPAIGNS_FILE)])
+    subprocess.run([EDITOR, str(CAMPAIGNS_FILE)])
 
 def cmd_wiki():
     """فتح ملف الويكي"""
