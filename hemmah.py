@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Campaign Manager - نظام إدارة الحملات
-ملف واحد - كل الوظائف
+Hemmah campaign Manager - نظام إدارة الحملات
 """
 
 import sys
@@ -39,7 +38,7 @@ WIKI_FILE = SCRIPT_DIR / "wiki.pdf"
 WIKI_VIEWER = "zathura"
 MOTIVATE_FILE = SCRIPT_DIR / "quotes.md"
 YOURSELF_FILE = SCRIPT_DIR / "yourself.md"
-YOURSELF_VIEWER = "less"  # or: less, cat, nvim
+YOURSELF_VIEWER = "less"  # less, cat, nvim
 EDITOR = os.environ.get('EDITOR', 'nvim')
 
 # ═══════════════════════════════════════
@@ -53,7 +52,7 @@ def remove_comment(line):
     return line
 
 def parse_campaigns_file():
-    """قراءة ملف الحملات بدون YAML"""
+    """قراءة ملف الحملات"""
     if not CAMPAIGNS_FILE.exists():
         return []
 
@@ -275,11 +274,11 @@ def cmd_help():
   yourself      فتح ملف "عن نفسك"
 
 الاستخدام:
-  python3 campaign.py <command>
+  python3 hemmah.py <command>
 
 مثال:
-  python3 campaign.py info
-  python3 campaign.py current
+  python3 hemmah.py info
+  python3 hemmah.py current
 """)
 
 def cmd_info():

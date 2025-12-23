@@ -1,19 +1,19 @@
-# Campaigno
+# Hemmah
 Simple campaign manager for unix like systems.
 
 IN THE NAME OF GOD, THE MOST GRACIOUS, THE MOST MERCIFUL.
 
-Here is the Campaigno app which makes your productivity slope like waves of 6 weeks of work and 2 weeks of rest, not sure of it, but I have the freedom to try it.
+Here is the Hemmah app which makes your productivity slope like waves of 6 weeks of work and 2 weeks of rest, not sure of it, but I have the freedom to try it.
 
 Using the program as follows:
-    python3 campaign.py <tag>
-        you can see available tags by typing <python3 campaign.py> or <python3 campaign.py help>, that help is in arabic, cope with it if you aren't.
+    python3 hemmah.py <tag>
+        you can see available tags by typing <python3 hemmah.py> or <python3 hemmah.py help>, that help is in arabic, cope with it if you aren't.
         you can set its keys (for templates) and default apps from it.
 
-    campaign-prompt.sh
+    hemmah-prompt.sh
         that prints little piece of information about the current status you can use it in your bar, terminal, etc.
 
-In the begining you will find the the folder contains: campaign.py, campaign-prombt.sh and that Readme file.
+In the begining you will find the the folder contains: hemmah.py, hemmah-prombt.sh and that Readme file.
 
 You have to make campaigns file for the first time and you have to set its path inside the program, you alse have to set keys to give some support to your language like me, then in the campaigns.md file you have to set template for campaigns.
 That template should be equal to the keys you set. here is some notes you need to know:
