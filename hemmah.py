@@ -287,7 +287,7 @@ def cmd_info():
 
     if not campaign:
         print("❌ لا توجد حملة نشطة")
-        print("✏️  أنشئ واحدة: python3 campaign.py edit")
+        print("✏️  أنشئ واحدة: python3 hemmah.py edit")
         return
 
     data = campaign['data']
