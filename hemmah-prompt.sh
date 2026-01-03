@@ -66,7 +66,7 @@ while IFS= read -r line; do
             if [ $TODAY -le $END_EPOCH ]; then
                 # في الحملة
                 DAYS_LEFT=$(( (END_EPOCH - TODAY) / 86400 ))
-                echo -n " [C${NUMBER}•W${WEEK}•${DAYS_LEFT}d]"
+                echo -n "[C${NUMBER}•W${WEEK}•${DAYS_LEFT}d]"
             else
                 # في الاستشفاء
                 DAYS_TO_END=$(( (RECOVERY_END_EPOCH - TODAY) / 86400 ))
@@ -74,11 +74,11 @@ while IFS= read -r line; do
                 if [ $DAYS_TO_END -le 2 ]; then
                     # قبل يومين من النهاية
                     NEXT_NUMBER=$((NUMBER + 1))
-                    echo -n " [Plan C${NEXT_NUMBER}→${DAYS_TO_END}d]"
+                    echo -n "[Plan C${NEXT_NUMBER}→${DAYS_TO_END}d]"
                 else
                     # استشفاء عادي
                     RECOVERY_DATE=$(date -d "@$RECOVERY_END_EPOCH" +"%b %d" 2>/dev/null || date -j -f "%s" "$RECOVERY_END_EPOCH" +"%b %d" 2>/dev/null)
-                    echo -n " [R→${RECOVERY_DATE}]"
+                    echo -n "[R→${RECOVERY_DATE}]"
                 fi
             fi
             
